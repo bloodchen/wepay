@@ -1,10 +1,21 @@
 const { Wechaty } = require("wechaty");
+const { Heartbeat } =require('wechaty-plugin-contrib')
 const fetch = require('node-fetch')
 const md5 = require('md5');
 require('dotenv').config()
-// const request = require("request");
 
+/* enum ScanStatus {
+  Unknown   = 0,
+  Cancel    = 1,
+  Waiting   = 2,
+  Scanned   = 3,
+  Confirmed = 4,
+  Timeout   = 5,
+}*/
+
+let firstLogin = true
 function onScan(qrcode, status) {
+  if(status==2||firstLogin){
   // 在控制台显示二维码
   require("qrcode-terminal").generate(qrcode, { small: true });
 
@@ -12,12 +23,22 @@ function onScan(qrcode, status) {
     "https://api.qrserver.com/v1/create-qr-code/?data=",
     encodeURIComponent(qrcode),
   ].join("");
-
   console.log(qrcodeImageUrl);
+  if(firstLogin==false){
+    console.log("need rescan!!!!!!")
+    callRescan()
+  }
+}
+if(status==3){
+  firstLogin = false
+}
+  console.log(status);
 }
 
 // 登录
+let selfUser = null
 function onLogin(user) {
+  selfUser = user
   console.log(`${user} login`);
 }
 
@@ -34,6 +55,13 @@ function sendPayment(priceAmount,orderid,timestamp) {
   fetch(url)
 }
 
+function callRescan(){
+  const url = process.env.RESCAN
+  if(url)
+    fetch(url)
+  else
+    console.log("RESCAN not set")
+}
 // 消息来自 “微信支付”，信息格式为“微信支付收款0.01元”
 async function onMessage(msg) {
   // 5分钟前的消息不处理
@@ -41,9 +69,9 @@ async function onMessage(msg) {
     return;
   }
 
- /* console.log("msg :>> ", JSON.stringify(msg, null, 2));
+ //console.log("msg :>> ", JSON.stringify(msg, null, 2));
   
-  console.log("contact: ", contact);
+ /*  console.log("contact: ", contact);
   const text = msg.text();
   console.log("text: ", text);
   
@@ -58,6 +86,11 @@ async function onMessage(msg) {
   const text = msg.text();
   const msgDate = msg.date();
 
+  if(contact.self()){
+    console.log("self message:",text)
+  }else{
+    console.log(contact.name()," say:",text)
+  }
   // 非微信支付
   if (contact.name() !== "微信支付") {
     // 这里可以操作一些文本匹配，语音识别，图片处理之类等操作
@@ -87,11 +120,21 @@ console.log(process.env.CALLBACK,process.env.PASSWORD,md5(process.env.CALLBACK))
 // 实例化
 const bot = new Wechaty();
 
+const config = {
+  contact: 'filehelper',    // default: filehelper - Contact id who will receive the emoji
+  emoji: {
+    heartbeat: '[爱心]',    // default: [爱心] - Heartbeat emoji
+  },
+  intervalSeconds: 10, // Default: 1 hour - Send emoji for every 1 hour
+}
+Wechaty.use(Heartbeat(config))
 // 注册事件
 bot.on("scan", onScan);
 bot.on("login", onLogin);
 bot.on("logout", onLogout);
 bot.on("message", onMessage);
+bot.on("error",(err)=>{console.log(err)});
+
 
 bot
   .start()
