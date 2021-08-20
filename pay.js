@@ -52,13 +52,17 @@ function sendPayment(priceAmount,orderid,timestamp) {
   const sign = md5(orderid+timestamp+process.env.PASSWORD)
   console.log(priceAmount, orderid,timestamp,md5)
   const url = process.env.CALLBACK + "?amount="+priceAmount+"&orderid="+orderid+"&ts="+timestamp+"sign="+sign
+  console.log("calling:",url)
   fetch(url)
 }
 
 function callRescan(){
   const url = process.env.RESCAN
-  if(url)
+   console.log("calling:",url)
+  if(url){
+   
     fetch(url)
+  }
   else
     console.log("RESCAN not set")
 }
