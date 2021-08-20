@@ -1,7 +1,10 @@
 const { Wechaty } = require("wechaty");
 const { Heartbeat } =require('wechaty-plugin-contrib')
 const fetch = require('node-fetch')
-const md5 = require('md5');
+const md5 = require('md5')
+var QRCode = require('qrcode')
+ 
+
 require('dotenv').config()
 
 /* enum ScanStatus {
@@ -17,13 +20,10 @@ let firstLogin = true
 function onScan(qrcode, status) {
   if(status==2||firstLogin){
   // 在控制台显示二维码
-  require("qrcode-terminal").generate(qrcode, { small: true });
-
-  const qrcodeImageUrl = [
-    "https://api.qrserver.com/v1/create-qr-code/?data=",
-    encodeURIComponent(qrcode),
-  ].join("");
-  console.log(qrcodeImageUrl);
+  QRCode.toString(qrcode,{type:'terminal',scale:2}, function (err, url) {
+    console.log(url)
+  })
+  QRCode.toFile(process.env.OUTPUT+'/login.png',qrcode)
   if(firstLogin==false){
     console.log("need rescan!!!!!!")
     callRescan()
