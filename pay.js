@@ -51,7 +51,7 @@ function onLogout(user) {
 function sendPayment(priceAmount,orderid,timestamp) {
   const sign = md5(orderid+timestamp+process.env.PASSWORD)
   console.log(priceAmount, orderid,timestamp,sign)
-  const url = process.env.CALLBACK + "?amount="+priceAmount+"&orderid="+orderid+"&ts="+timestamp+"sign="+sign
+  const url = process.env.CALLBACK + "?amount="+priceAmount+"&orderid="+orderid+"&ts="+timestamp+"&sign="+sign
   console.log("calling:",url)
   fetch(url)
 }
